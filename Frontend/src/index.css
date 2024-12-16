@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  position: relative;
+}
+
+::-webkit-scrollbar-thumb {
+  width: 5px;
+}
