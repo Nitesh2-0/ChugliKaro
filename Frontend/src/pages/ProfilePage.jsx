@@ -69,7 +69,7 @@ const ProfilePage = () => {
 
   return (
     <div className="w-screen md:w-96 border-t md:border-t-0 flex items-center z-50 justify-center">
-      <div className="w-full md:border-t-2 z-50 border-yellow-400 bg-gray-50 md:rounded-lg md:shadow-md overflow-hidden">
+      <div className="w-full h-screen md:h-auto md:border-t-2 z-50 border-yellow-400 bg-gray-50 md:rounded-lg md:shadow-md overflow-hidden">
         <div className="p-4 w-full">
           <div className="text-center mb-6 relative">
             <h1 className="text-xl font-semibold text-gray-800 uppercase"> MY Profile</h1>

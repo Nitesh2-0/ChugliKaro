@@ -1,75 +1,109 @@
-import { useState } from 'react';
-import { RiAttachmentLine, RiEmotionLine, RiSendPlaneLine } from 'react-icons/ri';
-import EmojiPicker from 'emoji-picker-react';
+import { useRef, useState } from "react";
+import { useChatStore } from "../store/useChatStore";
+import { Image, Send, X } from "lucide-react";
+import toast from "react-hot-toast";
 
-const Input = () => {
-  const [message, setMessage] = useState('');
-  const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);
+const MessageInput = () => {
+  const [text, setText] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+  const { sendMessage } = useChatStore();
 
-  const handleEmojiClick = (event, emojiObject) => {
-    if (emojiObject && emojiObject.emoji) {
-      setMessage((prevMessage) => prevMessage + emojiObject.emoji);
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
     }
-    setEmojiPickerOpen(false);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      console.log("Image uploaded: ", file.name);
-    }
+  const removeImage = () => {
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      console.log('Message sent:', message);
-      setMessage('');
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!text.trim() && !imagePreview) return;
+
+    try {
+      await sendMessage({
+        text: text.trim(),
+        image: imagePreview,
+      });
+
+      // Clear form
+      setText("");
+      setImagePreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error) {
+      console.error("Failed to send message:", error);
     }
   };
 
   return (
-    <div className="relative flex items-center bg-white p-3 space-x-3">
-      <label htmlFor="file-upload" className="cursor-pointer text-gray-500 hover:text-blue-500">
-        <RiAttachmentLine className="w-6 h-6" />
-      </label>
-      <input
-        id="file-upload"
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-      <div className="flex-grow flex items-center bg-gray-100 rounded-full px-4 py-2 space-x-2">
-        <input
-          type="text"
-          placeholder="Type a message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="flex-grow bg-transparent outline-none text-gray-700 placeholder-gray-500"
-        />
-        <button
-          onClick={() => setEmojiPickerOpen((prev) => !prev)}
-          className="text-gray-500 hover:text-yellow-500"
-        >
-          <RiEmotionLine className="w-6 h-6" />
-        </button>
-      </div>
-      <button
-        onClick={handleSendMessage}
-        disabled={!message.trim()}
-        className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 ${
-          !message.trim() ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
-      >
-        <RiSendPlaneLine className="w-6 h-6" />
-      </button>
-      {isEmojiPickerOpen && (
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10">
-          <EmojiPicker onEmojiClick={handleEmojiClick} />
+    <div className="p-4 relative w-full">
+      {imagePreview && (
+        <div className="mb-3 -top-20 absolute flex items-center gap-2">
+          <div className="relative">
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="w-20 h-20 bg-white object-cover rounded-lg border border-zinc-700"
+            />
+            <button
+              onClick={removeImage}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-base-300
+              flex items-center justify-center"
+              type="button"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
         </div>
       )}
+
+      <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+        <div className="flex-1 flex gap-2">
+          <input
+            type="text"
+            className="w-full input input-bordered rounded-lg input-sm sm:input-md"
+            placeholder="Type a message..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+          />
+
+          <button
+            type="button"
+            className={`btn btn-circle
+                     ${imagePreview ? "text-emerald-500" : "text-zinc-400"}`}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Image  className="size-3" />
+          </button>
+        </div>
+        <button
+          type="submit"
+          className="btn btn-sm btn-circle"
+          disabled={!text.trim() && !imagePreview}
+        >
+          <Send size={22} />
+        </button>
+      </form>
     </div>
   );
 };
-
-export default Input;
+export default MessageInput;
